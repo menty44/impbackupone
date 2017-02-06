@@ -1,0 +1,164 @@
+ 
+  /**
+   * Description of class.
+   * <p>
+   * Copyright (c) ImpalaPay Ltd., Jan 11, 2016  
+   * 
+   * @author <a href="mailto:kmuli@impalapay.com">Kelvin Muli M.</a>
+   * 
+   */
+package com.impala.beyonic.send;
+
+/**
+ * @author mulikevs
+ *
+ */
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import com.google.gson.Gson;
+
+
+/**
+ * Remit Money to Ghana.
+ * <p>
+ * Copyright (c) ImpalaPay Ltd., ${date}  
+ * 
+ * @author <a href="mailto:kmuli@impalapay.com">Kelvin Muli M.</a>
+ * 
+ */
+
+public class Remit {
+   
+    public String RemitMobile(String name, String recipient_mobile,
+     String amount){
+
+String status ="";
+
+
+       try
+       {
+           
+           //String referencenumber = RandomStringUtils.random(12, 0, 10, true, true, "bj81G5RDED3DC6142kasok".toCharArray());
+           //String referencenumber =string;
+           UUID referencenumber = UUID.randomUUID();
+           Map<String,String> user3=new HashMap<>();
+               
+         
+           //{"amount": 10, "wallet_provider": "MTN", "mobileno": "0244124660"}'
+			user3.put("currency", "UGX");
+			user3.put("metadata.name", name);
+			user3.put("description", "ImpalaPay");
+			user3.put("metadata.id",referencenumber.toString());
+			user3.put("phonenumber", recipient_mobile); 
+			user3.put("amount", amount);
+
+           
+           Gson g = new Gson();
+           String jsonData = g.toJson(user3);
+           //System.out.println(referencenumber.toString());
+           //System.out.println(jsonData);
+     
+       
+      
+      
+       URL url = new URL("https://app.beyonic.com/api/payments");
+       doTrustToCertificates();
+       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+       String token="Token "+"c97ffbc5b80e32ecdeb61f556461768bdd048ebb";
+       
+       
+       connection.setDoOutput(true);
+       connection.setRequestMethod("POST");
+       connection.setRequestProperty("charset", "UTF-8");
+       //connection.setRequestProperty ("Authorization", token);  
+       connection.setRequestProperty("Authorization",  token);
+       connection.setRequestProperty("content-type", "application/json");
+       connection.setRequestProperty("Content-Length", String.valueOf(jsonData.length()));
+       
+       // Write data
+       OutputStream os = connection.getOutputStream();
+       os.write(jsonData.getBytes());
+      // System.out.println("connection : " + connection);
+       int responseCode = connection.getResponseCode();
+                   System.out.println("\nSending 'POST' request to URL : " + url);
+                   System.out.println("Post parameters : " + jsonData);
+                   System.out.println("Response Code : " + responseCode);
+        
+                   
+                   
+       // Read response
+       StringBuilder responseSB = new StringBuilder();
+       BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+       System.out.println("Response Code : " + responseSB.toString());
+       String line;
+       while ( (line = br.readLine()) != null)
+           responseSB.append(line);
+                
+       // Close streams
+       br.close();
+       os.close();
+       if (!responseSB.toString().trim().equals(""))
+       {
+        System.out.println(responseSB.toString());
+     
+       }
+       
+       }catch (Exception ee)
+       {
+           ee.printStackTrace();
+         
+       }
+       return status;
+
+   }
+
+static public void doTrustToCertificates() throws Exception {
+        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+        TrustManager[] trustAllCerts = new TrustManager[]
+             {new X509TrustManager() {
+               @Override
+               public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                   return null;
+               }
+               @Override
+               public void checkClientTrusted(X509Certificate[] certs, String authType) {
+               }
+               @Override
+               public void checkServerTrusted(X509Certificate[] certs, String authType) {
+               }
+           }
+        };
+ 
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+               System.setProperty("java.net.useSystemProxies", "true");
+        HostnameVerifier hv = new HostnameVerifier() {
+            public boolean verify(String urlHostName, SSLSession session) {
+                if (!urlHostName.equalsIgnoreCase(session.getPeerHost())) {
+                    System.out.println("Warning: URL host '" + urlHostName + "' is different to SSLSession host '" + session.getPeerHost() + "'.");
+                }
+                return true;
+            }
+        };
+        HttpsURLConnection.setDefaultHostnameVerifier(hv);
+    }
+  
+   
+}

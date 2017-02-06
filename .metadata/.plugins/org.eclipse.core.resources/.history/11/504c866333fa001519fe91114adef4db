@@ -1,0 +1,133 @@
+ 
+  /**
+   * Description of class.
+   * <p>
+   * Copyright (c) ImpalaPay Ltd., Jan 14, 2016  
+   * 
+   * @author <a href="mailto:kmuli@impalapay.com">Kelvin Muli M.</a>
+   * 
+   */
+package com.impala.beyonic.querry;
+
+/**
+ * @author mulikevs
+ *
+ */
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
+public class QuerryStatusBeyonic {
+
+	//private final String USER_AGENT = "Mozilla/5.0";
+
+	public static void main(String[] args) throws Exception {
+
+		QuerryStatusBeyonic http = new QuerryStatusBeyonic();
+
+		System.out.println("Testing 1 - Send Http GET request");
+		http.sendGet();
+		
+		
+
+	}
+
+	// HTTP GET request
+	private void sendGet() throws Exception {
+
+		String id = "23582";
+		String url = "https://app.beyonic.com/api/payments/"+id+"?format=json";
+		String token="Token "+"c97ffbc5b80e32ecdeb61f556461768bdd048ebb";
+		URL obj = new URL(url);
+		doTrustToCertificates();
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+		// optional default is GET
+		con.setRequestMethod("GET");
+
+		//add request header
+		con.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+		con.setRequestProperty("Authorization",  token);
+		//con.setRequestProperty("User-Agent", USER_AGENT);
+		
+
+		
+
+		BufferedReader in = new BufferedReader(
+		        new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+			
+			JsonElement roots = new JsonParser().parse(response.toString());
+			//exctract a specific json element from the object(state)
+			String switchresponse = roots.getAsJsonObject().get("state")
+					.getAsString();
+			//exctract a specific json element from the object(state)
+			String switchresponseid = roots.getAsJsonObject().get("id")
+					.getAsString();
+			
+			String last_error = roots.getAsJsonObject().get("last_error")
+			.getAsString();
+			System.out.println("state  "+switchresponse);
+			System.out.println("id  "+switchresponseid);
+			System.out.println("last_error  "+last_error);
+			
+		}
+		in.close();
+
+		//print result
+		System.out.println(response.toString());
+
+	}
+	
+	static public void doTrustToCertificates() throws Exception {
+        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+        TrustManager[] trustAllCerts = new TrustManager[]
+             {new X509TrustManager() {
+               @Override
+               public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                   return null;
+               }
+               @Override
+               public void checkClientTrusted(X509Certificate[] certs, String authType) {
+               }
+               @Override
+               public void checkServerTrusted(X509Certificate[] certs, String authType) {
+               }
+           }
+        };
+ 
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+               System.setProperty("java.net.useSystemProxies", "true");
+        HostnameVerifier hv = new HostnameVerifier() {
+            public boolean verify(String urlHostName, SSLSession session) {
+                if (!urlHostName.equalsIgnoreCase(session.getPeerHost())) {
+                    System.out.println("Warning: URL host '" + urlHostName + "' is different to SSLSession host '" + session.getPeerHost() + "'.");
+                }
+                return true;
+            }
+        };
+        HttpsURLConnection.setDefaultHostnameVerifier(hv);
+    }
+
+}

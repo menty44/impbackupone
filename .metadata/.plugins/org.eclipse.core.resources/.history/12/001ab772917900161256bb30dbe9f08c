@@ -1,0 +1,40 @@
+ 
+  /**
+   * Description of class.
+   * <p>
+   * Copyright (c) ImpalaPay Ltd., Aug 5, 2016  
+   * 
+   * @author <a href="mailto:kmuli@impalapay.com">Kelvin Muli M.</a>
+   * 
+   */
+package com.impala.cellular.status;
+
+import java.io.IOException;
+
+import org.json.JSONException;
+
+import com.impala.cellular.balance.Balance;
+
+/**
+ * @author mulikevs
+ *
+ */
+public class TestStatus {
+
+	private static TransactionStatus status;
+    public static void main(String[] args) throws JSONException, IOException {
+    	
+    
+            status = new TransactionStatus();
+        
+        
+        String request =status.GetStatus("bcd1d7df56da4b6a878b340517b33d20");
+        
+        //JSONObject myObject = new JSONObject(request);
+        System.out.println("status"+request);
+        
+    
+
+    }
+
+}

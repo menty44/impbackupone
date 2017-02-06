@@ -1,0 +1,197 @@
+ 
+  /**
+   * Description of class.
+   * <p>
+   * Copyright (c) ImpalaPay Ltd., Mar 1, 2016  
+   * 
+   * @author <a href="mailto:kmuli@impalapay.com">Kelvin Muli M.</a>
+   * 
+   */
+package com.impala.infenix.bank.bankAccount;
+
+import java.io.ByteArrayOutputStream;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.MimeHeaders;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPConnection;
+import javax.xml.soap.SOAPConnectionFactory;
+import javax.xml.soap.SOAPElement;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPMessage;
+import javax.xml.soap.SOAPPart;
+
+import org.json.XML;
+
+
+
+/**
+ * @author mulikevs
+ *
+ */
+public class BankAccount {
+
+
+	 /**
+    * Starting point for the SAAJ - SOAP Client Testing
+    */
+   public String getBankAccount() {
+   	String response ="";
+   	
+  
+   	try {
+           // Create SOAP Connection
+       	
+           SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+           SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+           // Send SOAP Message to SOAP Server
+           
+           String url = "https://posdev.infenix.com/is-bin/intershop.servlet/WFS/Axis2/ImpalaWhole1-ImpalaDistrib1-Site/WSExpose.WSExposeHttpSoap12Endpoint";
+           doTrustToCertificates();
+           SOAPMessage soapResponse = soapConnection.call(createSOAPRequest(), url);
+           
+           ByteArrayOutputStream out = new ByteArrayOutputStream(); 
+           soapResponse.writeTo(out);
+           System.out.println("Kasambe"+out.toString());
+            String xml = out.toString();
+            
+            String replacedStr = xml.replaceAll("&lt;", "<");
+            
+            
+            //
+           
+            String replacedStr1 = replacedStr.replaceAll("<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"><soapenv:Body>", "");
+            String replacedStr2 = replacedStr1.replaceAll("</soapenv:Body></soapenv:Envelope>", "");
+            String replacedStr3 = replacedStr2.replaceAll("<ns:d360_get_bank_accountResponse xmlns:ns=\"http://pipeline_ws\"><ns:return><Result>", "");
+            String replacedStr4 = replacedStr3.replaceAll("</Result></ns:return></ns:d360_get_bank_accountResponse>", "");
+            
+           // String replacedStr3 = xml.replaceAll("&lt;", "<");
+            
+            System.out.println(replacedStr4);
+            
+            
+            org.json.JSONObject xmlJSONObj = XML.toJSONObject(replacedStr4);
+            
+            
+            String return_message = (String) xmlJSONObj.get("return_message");
+    		System.out.println(return_message);
+    		
+    		String return_code = (String) xmlJSONObj.get("return_code");
+    		System.out.println(return_code);
+    		//<?xml version='1.0' encoding='utf-8'?><return_message>success</return_message><receive_amount>599.4</receive_amount><receive_currency_code>6</receive_currency_code><return_code>OK100</return_code><demat360_transaction_id>145206043175534</demat360_transaction_id>
+    		
+    	
+    		
+    		
+    		
+    		
+            
+           
+           // resp = replacedStr.getSOAPBody().getElementsByTagName("status").item(0).getFirstChild().getNodeValue();
+            //Get the response
+             // System.out.println(resp);
+          
+           
+
+           soapConnection.close();
+       } catch (Exception e) {
+           System.err.println("Error occurred while sending SOAP Request to Server");
+           e.printStackTrace();
+       }
+		return response;
+   }
+
+
+
+	private static SOAPMessage createSOAPRequest() throws Exception {
+       MessageFactory messageFactory = MessageFactory.newInstance();
+       SOAPMessage soapMessage = messageFactory.createMessage();
+       SOAPPart soapPart = soapMessage.getSOAPPart();
+
+       String serverURI = "http://pipeline_ws";
+
+       // SOAP Envelope
+       SOAPEnvelope envelope = soapPart.getEnvelope();
+       envelope.addNamespaceDeclaration("pip", serverURI);
+
+    
+
+       // SOAP Body
+   
+       
+       SimpleDateFormat now = new SimpleDateFormat("YYYY-MM-dd");
+       String timeto  = now.format(new Date());
+       
+       System.out.println(timeto);
+       
+       SOAPBody soapBody = envelope.getBody();
+       SOAPElement soapBodyElem = soapBody.addChildElement("d360_get_bank_account", "pip");
+       SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("username", "pip");
+       soapBodyElem1.addTextNode("ImpalaPay");
+       SOAPElement soapBodyElem2 = soapBodyElem.addChildElement("password", "pip");
+       soapBodyElem2.addTextNode("I*mpl_20!5");
+       //receiver_msisdn, wallet_operator_code, sending_amount, sender_name, third_party_trans_id, sending_currency_code , d360_service_code, reference
+       
+       
+
+       MimeHeaders headers = soapMessage.getMimeHeaders();
+       headers.addHeader("SOAPAction", serverURI  + "d360_get_bank_account");
+
+       soapMessage.saveChanges();
+
+       /* Print the request message */
+       System.out.print("Request SOAP Message = ");
+       soapMessage.writeTo(System.out);
+       System.out.println();
+
+       return soapMessage;
+   }
+
+
+   static public void doTrustToCertificates() throws Exception {
+       Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+       TrustManager[] trustAllCerts = new TrustManager[]
+            {new X509TrustManager() {
+              @Override
+              public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                  return null;
+              }
+              @Override
+              public void checkClientTrusted(X509Certificate[] certs, String authType) {
+              }
+              @Override
+              public void checkServerTrusted(X509Certificate[] certs, String authType) {
+              }
+          }
+       };
+
+       SSLContext sc = SSLContext.getInstance("SSL");
+       sc.init(null, trustAllCerts, new SecureRandom());
+       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+              System.setProperty("java.net.useSystemProxies", "true");
+       HostnameVerifier hv = new HostnameVerifier() {
+           public boolean verify(String urlHostName, SSLSession session) {
+               if (!urlHostName.equalsIgnoreCase(session.getPeerHost())) {
+                   System.out.println("Warning: URL host '" + urlHostName + "' is different to SSLSession host '" + session.getPeerHost() + "'.");
+               }
+               return true;
+           }
+       };
+       HttpsURLConnection.setDefaultHostnameVerifier(hv);
+   }
+
+
+
+}

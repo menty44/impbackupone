@@ -1,0 +1,18 @@
+ 
+  /**
+   * Description of class.
+   * <p>
+   * Copyright (c) ImpalaPay Ltd., Sep 20, 2016  
+   * 
+   * @author <a href="mailto:kmuli@impalapay.com">Kelvin Muli M.</a>
+   * 
+   */
+package com.impala.wari.auth;
+
+/**
+ * @author mulikevs
+ *
+ */
+public class TestAuthenticate {
+
+}
